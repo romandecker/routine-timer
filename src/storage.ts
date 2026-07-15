@@ -1,31 +1,49 @@
-import type { Routine } from "./types";
+import type { Exercise, Routine, RoutineStep } from "./types";
 
 /**
  * localStorage persistence for routines. No server, no sync — this is the
  * device-local store. The key is versioned so a future schema change can
  * migrate (or ignore) old data without clobbering it silently.
+ *
+ * Routines have no id: within a session they are identified by object
+ * reference, so `upsertRoutine`/`deleteRoutine` take the live object, not a key.
  */
-const STORAGE_KEY = "routine-timers.routines.v1";
+const STORAGE_KEY = "routine-timers.routines.v2";
 
-/** Generate a stable unique id for a new routine. */
-export function newId(): string {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return crypto.randomUUID();
-  }
-  // Fallback for very old browsers.
-  return `r-${Math.abs(Math.floor(performance.now() * 1000))}-${Math.floor(
-    Math.random() * 1e6,
-  )}`;
+function isExercise(value: unknown): value is Exercise {
+  if (typeof value !== "object" || value === null) return false;
+  const e = value as Record<string, unknown>;
+  return (
+    typeof e.name === "string" &&
+    (e.bilateral === undefined || typeof e.bilateral === "boolean") &&
+    (e.description === undefined || typeof e.description === "string")
+  );
 }
 
-function isRoutine(value: unknown): value is Routine {
+function isStep(value: unknown): value is RoutineStep {
+  if (typeof value !== "object" || value === null) return false;
+  const s = value as Record<string, unknown>;
+  return (
+    isExercise(s.exercise) &&
+    typeof s.sets === "number" &&
+    typeof s.holdSeconds === "number" &&
+    typeof s.restBetweenSetsSeconds === "number"
+  );
+}
+
+/**
+ * Deep shape-check for an untrusted `Routine`. This is the safety net for both
+ * corrupt localStorage and decoded share links: anything that doesn't match is
+ * rejected outright rather than half-imported.
+ */
+export function isRoutine(value: unknown): value is Routine {
   if (typeof value !== "object" || value === null) return false;
   const r = value as Record<string, unknown>;
   return (
-    typeof r.id === "string" &&
     typeof r.name === "string" &&
+    typeof r.restBetweenExercisesSeconds === "number" &&
     Array.isArray(r.steps) &&
-    typeof r.restBetweenExercisesSeconds === "number"
+    r.steps.every(isStep)
   );
 }
 
@@ -52,20 +70,35 @@ export function saveRoutines(routines: Routine[]): void {
   }
 }
 
-/** Insert or replace a routine by id and persist. Returns the new list. */
-export function upsertRoutine(routines: Routine[], routine: Routine): Routine[] {
-  const idx = routines.findIndex((r) => r.id === routine.id);
-  const next =
+/**
+ * Replace `original` with `next`, or append `next` if `original` isn't in the
+ * list (i.e. a brand-new routine). Identity is by object reference. Persists
+ * and returns the new list.
+ */
+export function upsertRoutine(
+  routines: Routine[],
+  original: Routine | null,
+  next: Routine,
+): Routine[] {
+  const idx = original ? routines.indexOf(original) : -1;
+  const list =
     idx === -1
-      ? [...routines, routine]
-      : routines.map((r) => (r.id === routine.id ? routine : r));
-  saveRoutines(next);
-  return next;
+      ? [...routines, next]
+      : routines.map((r, i) => (i === idx ? next : r));
+  saveRoutines(list);
+  return list;
 }
 
-/** Delete a routine by id and persist. Returns the new list. */
-export function deleteRoutine(routines: Routine[], id: string): Routine[] {
-  const next = routines.filter((r) => r.id !== id);
-  saveRoutines(next);
-  return next;
+/** Delete a routine by reference and persist. Returns the new list. */
+export function deleteRoutine(routines: Routine[], target: Routine): Routine[] {
+  const list = routines.filter((r) => r !== target);
+  saveRoutines(list);
+  return list;
+}
+
+/** Append an imported routine and persist. Returns the new list. */
+export function addRoutine(routines: Routine[], routine: Routine): Routine[] {
+  const list = [...routines, routine];
+  saveRoutines(list);
+  return list;
 }

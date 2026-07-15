@@ -5,6 +5,22 @@
   padding: 16px;
 }
 
+/* Transient confirmation toast (share copied / imported). */
+.flash {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  background: var(--accent);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+}
+
 /* ---- Buttons ---- */
 .btn {
   appearance: none;
@@ -167,6 +183,14 @@
   border-radius: 10px;
   padding: 10px;
   font-size: 16px;
+}
+.step__name {
+  flex: 1;
+  font-weight: 600;
+}
+.step__description {
+  font-family: inherit;
+  resize: vertical;
 }
 .step__reorder {
   display: flex;

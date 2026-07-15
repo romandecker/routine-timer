@@ -1,4 +1,3 @@
-import { getExercise } from "../catalog";
 import type { Routine, TimelinePhase } from "../types";
 
 /**
@@ -15,8 +14,7 @@ export function buildTimeline(routine: Routine): TimelinePhase[] {
   const steps = routine.steps;
 
   steps.forEach((step, stepIndex) => {
-    const exercise = getExercise(step.exerciseId);
-    const name = exercise?.name ?? "Unknown exercise";
+    const name = step.exercise.name;
     const totalSets = Math.max(1, Math.floor(step.sets));
     const holdSeconds = Math.max(1, Math.floor(step.holdSeconds));
     const restBetweenSets = Math.max(0, Math.floor(step.restBetweenSetsSeconds));

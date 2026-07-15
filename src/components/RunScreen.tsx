@@ -1,5 +1,4 @@
 import { useRoutineTimer } from "../timer/useRoutineTimer";
-import { getExercise } from "../catalog";
 import { formatDuration } from "../format";
 import { totalDurationSeconds } from "../timer/engine";
 import type { Routine } from "../types";
@@ -51,9 +50,9 @@ export function RunScreen({ routine, onExit }: Props) {
               <p className="run__set">
                 Set {phase.setNumber} / {phase.totalSets}
               </p>
-              {getExercise(routine.steps[phase.stepIndex]?.exerciseId)?.description && (
+              {routine.steps[phase.stepIndex]?.exercise.description && (
                 <p className="run__hint">
-                  {getExercise(routine.steps[phase.stepIndex].exerciseId)!.description}
+                  {routine.steps[phase.stepIndex].exercise.description}
                 </p>
               )}
             </>

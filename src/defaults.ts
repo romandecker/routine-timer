@@ -1,14 +1,21 @@
 import { CATALOG } from "./catalog";
-import { newId } from "./storage";
-import type { Routine, RoutineStep } from "./types";
+import type { Exercise, ExerciseTemplate, Routine, RoutineStep } from "./types";
 
-/** A blank step for a given exercise, seeded from its catalog defaults. */
-export function makeStep(exerciseId: string): RoutineStep {
-  const ex = CATALOG.find((e) => e.id === exerciseId) ?? CATALOG[0];
+/** Copy a template's exercise fields into a fresh inline exercise. */
+export function exerciseFromTemplate(t: ExerciseTemplate): Exercise {
   return {
-    exerciseId: ex.id,
+    name: t.name,
+    ...(t.bilateral ? { bilateral: true } : {}),
+    ...(t.description ? { description: t.description } : {}),
+  };
+}
+
+/** A blank step seeded from a catalog template. */
+export function makeStep(template: ExerciseTemplate = CATALOG[0]): RoutineStep {
+  return {
+    exercise: exerciseFromTemplate(template),
     sets: 1,
-    holdSeconds: ex.defaultHoldSeconds,
+    holdSeconds: template.defaultHoldSeconds,
     restBetweenSetsSeconds: 10,
   };
 }
@@ -16,26 +23,37 @@ export function makeStep(exerciseId: string): RoutineStep {
 /** An empty, unsaved routine with one starter step. */
 export function makeEmptyRoutine(): Routine {
   return {
-    id: newId(),
     name: "New routine",
-    steps: [makeStep(CATALOG[0].id)],
+    steps: [makeStep()],
     restBetweenExercisesSeconds: 15,
   };
 }
 
 /** A ready-made sample so first-run isn't empty. */
 export function makeSampleRoutine(): Routine {
+  const pick = (name: string): ExerciseTemplate =>
+    CATALOG.find((t) => t.name === name) ?? CATALOG[0];
+  const step = (
+    name: string,
+    sets: number,
+    holdSeconds: number,
+    restBetweenSetsSeconds: number,
+  ): RoutineStep => ({
+    exercise: exerciseFromTemplate(pick(name)),
+    sets,
+    holdSeconds,
+    restBetweenSetsSeconds,
+  });
   return {
-    id: newId(),
     name: "Morning Stretch",
     restBetweenExercisesSeconds: 15,
     steps: [
-      { exerciseId: "cat-cow", sets: 1, holdSeconds: 30, restBetweenSetsSeconds: 0 },
-      { exerciseId: "child-pose", sets: 1, holdSeconds: 45, restBetweenSetsSeconds: 0 },
-      { exerciseId: "standing-quad", sets: 2, holdSeconds: 30, restBetweenSetsSeconds: 10 },
-      { exerciseId: "hamstring-forward-fold", sets: 2, holdSeconds: 30, restBetweenSetsSeconds: 10 },
-      { exerciseId: "hip-flexor-lunge", sets: 2, holdSeconds: 30, restBetweenSetsSeconds: 10 },
-      { exerciseId: "butterfly-groin", sets: 1, holdSeconds: 45, restBetweenSetsSeconds: 0 },
+      step("Cat–Cow", 1, 30, 0),
+      step("Child's Pose", 1, 45, 0),
+      step("Standing Quad Stretch", 2, 30, 10),
+      step("Standing Hamstring Fold", 2, 30, 10),
+      step("Kneeling Hip Flexor Lunge", 2, 30, 10),
+      step("Butterfly (Groin) Stretch", 1, 45, 0),
     ],
   };
 }

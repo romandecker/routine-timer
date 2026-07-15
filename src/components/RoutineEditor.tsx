@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { CATALOG } from "../catalog";
-import { makeStep } from "../defaults";
+import { exerciseFromTemplate, makeStep } from "../defaults";
 import { formatDuration } from "../format";
 import { totalDurationSeconds } from "../timer/engine";
-import type { Routine, RoutineStep } from "../types";
+import type { Exercise, Routine, RoutineStep } from "../types";
 
 interface Props {
   initial: Routine;
@@ -50,6 +50,25 @@ export function RoutineEditor({ initial, onSave, onCancel }: Props) {
       steps: r.steps.map((s, idx) => (idx === i ? { ...s, ...patch } : s)),
     }));
 
+  const patchExercise = (i: number, patch: Partial<Exercise>) =>
+    setRoutine((r) => ({
+      ...r,
+      steps: r.steps.map((s, idx) =>
+        idx === i ? { ...s, exercise: { ...s.exercise, ...patch } } : s,
+      ),
+    }));
+
+  // Copy a template's fields into a step (name, description, bilateral, and the
+  // suggested hold). This is a one-shot seed — no lasting link to the template.
+  const applyTemplate = (i: number, templateIndex: number) => {
+    const t = CATALOG[templateIndex];
+    if (!t) return;
+    patchStep(i, {
+      exercise: exerciseFromTemplate(t),
+      holdSeconds: t.defaultHoldSeconds,
+    });
+  };
+
   const removeStep = (i: number) =>
     setRoutine((r) => ({ ...r, steps: r.steps.filter((_, idx) => idx !== i) }));
 
@@ -63,9 +82,12 @@ export function RoutineEditor({ initial, onSave, onCancel }: Props) {
     });
 
   const addStep = () =>
-    setRoutine((r) => ({ ...r, steps: [...r.steps, makeStep(CATALOG[0].id)] }));
+    setRoutine((r) => ({ ...r, steps: [...r.steps, makeStep()] }));
 
-  const canSave = routine.name.trim().length > 0 && routine.steps.length > 0;
+  const canSave =
+    routine.name.trim().length > 0 &&
+    routine.steps.length > 0 &&
+    routine.steps.every((s) => s.exercise.name.trim().length > 0);
 
   return (
     <section className="editor">
@@ -76,7 +98,16 @@ export function RoutineEditor({ initial, onSave, onCancel }: Props) {
         <button
           className="btn btn--primary"
           disabled={!canSave}
-          onClick={() => onSave({ ...routine, name: routine.name.trim() })}
+          onClick={() =>
+            onSave({
+              ...routine,
+              name: routine.name.trim(),
+              steps: routine.steps.map((s) => ({
+                ...s,
+                exercise: { ...s.exercise, name: s.exercise.name.trim() },
+              })),
+            })
+          }
         >
           Save
         </button>
@@ -107,17 +138,13 @@ export function RoutineEditor({ initial, onSave, onCancel }: Props) {
         {routine.steps.map((step, i) => (
           <li className="step" key={i}>
             <div className="step__head">
-              <select
-                className="step__select"
-                value={step.exerciseId}
-                onChange={(e) => patchStep(i, { exerciseId: e.target.value })}
-              >
-                {CATALOG.map((ex) => (
-                  <option key={ex.id} value={ex.id}>
-                    {ex.name}
-                  </option>
-                ))}
-              </select>
+              <input
+                className="field__input step__name"
+                type="text"
+                placeholder="Exercise name"
+                value={step.exercise.name}
+                onChange={(e) => patchExercise(i, { name: e.target.value })}
+              />
               <div className="step__reorder">
                 <button className="btn btn--icon" onClick={() => moveStep(i, -1)} disabled={i === 0}>
                   ↑
@@ -134,6 +161,42 @@ export function RoutineEditor({ initial, onSave, onCancel }: Props) {
                 </button>
               </div>
             </div>
+
+            <label className="field field--block">
+              <span className="field__label">Start from template</span>
+              <select
+                className="step__select"
+                value=""
+                onChange={(e) => {
+                  if (e.target.value === "") return;
+                  applyTemplate(i, Number(e.target.value));
+                  e.target.value = "";
+                }}
+              >
+                <option value="">Choose a template…</option>
+                {CATALOG.map((t, idx) => (
+                  <option key={idx} value={idx}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="field field--block">
+              <span className="field__label">Description (optional)</span>
+              <textarea
+                className="field__input step__description"
+                rows={2}
+                placeholder="Cue shown while holding this exercise"
+                value={step.exercise.description ?? ""}
+                onChange={(e) =>
+                  patchExercise(i, {
+                    description: e.target.value === "" ? undefined : e.target.value,
+                  })
+                }
+              />
+            </label>
+
             <div className="step__fields">
               <NumberField label="Sets" value={step.sets} min={1} onChange={(n) => patchStep(i, { sets: n })} />
               <NumberField label="Hold (s)" value={step.holdSeconds} min={1} onChange={(n) => patchStep(i, { holdSeconds: n })} />
