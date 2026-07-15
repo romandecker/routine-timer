@@ -283,3 +283,60 @@
   flex-wrap: wrap;
   justify-content: center;
 }
+
+/* ---- Minimap (run-screen progress strip) ---- */
+:root {
+  --minimap-w: 10px;
+}
+/* Reserve room so the fixed strip never overlaps the centred content. */
+.run__center {
+  padding-right: calc(16px + var(--minimap-w) + 14px);
+}
+.minimap {
+  position: fixed;
+  top: 24px;
+  bottom: 24px;
+  right: 10px;
+  width: var(--minimap-w);
+  z-index: 5;
+}
+.minimap__track {
+  display: flex;
+  flex-direction: column;
+  gap: 1px; /* hairline separators between phases */
+  height: 100%;
+  width: 100%;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.minimap__seg {
+  position: relative;
+  flex-grow: 0;
+  flex-shrink: 0;
+  width: 100%;
+  /* Unfilled track colour (future / not-yet-elapsed portion). */
+  background: var(--surface-2);
+}
+.minimap__fill {
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  /* height set inline (0–100% of this phase elapsed) */
+}
+.minimap__seg--hold .minimap__fill {
+  background: var(--hold);
+}
+.minimap__seg--rest .minimap__fill {
+  background: var(--rest);
+}
+.minimap__caret {
+  position: absolute;
+  right: 100%;
+  margin-right: 3px;
+  transform: translateY(-50%);
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 6px solid var(--text);
+}

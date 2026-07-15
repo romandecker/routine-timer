@@ -1,6 +1,7 @@
 import { useRoutineTimer } from "../timer/useRoutineTimer";
 import { formatDuration } from "../format";
 import { totalDurationSeconds } from "../timer/engine";
+import { Minimap } from "./Minimap";
 import type { Routine } from "../types";
 
 interface Props {
@@ -10,7 +11,8 @@ interface Props {
 
 export function RunScreen({ routine, onExit }: Props) {
   const timer = useRoutineTimer(routine);
-  const { status, phase, next, remainingSeconds, index, totalPhases } = timer;
+  const { status, phase, next, remainingSeconds, index, totalPhases, timeline } =
+    timer;
 
   const nextLabel = next
     ? next.kind === "hold"
@@ -40,47 +42,54 @@ export function RunScreen({ routine, onExit }: Props) {
       )}
 
       {(status === "running" || status === "paused") && phase && (
-        <div className="run__center">
-          <p className="run__kind">{phase.kind === "hold" ? "HOLD" : "REST"}</p>
-          <h1 className="run__phase">
-            {phase.kind === "hold" ? phase.label : "Rest"}
-          </h1>
-          {phase.kind === "hold" && (
-            <>
-              <p className="run__set">
-                Set {phase.setNumber} / {phase.totalSets}
-              </p>
-              {routine.steps[phase.stepIndex]?.exercise.description && (
-                <p className="run__hint">
-                  {routine.steps[phase.stepIndex].exercise.description}
+        <>
+          <Minimap
+            timeline={timeline}
+            index={index}
+            remainingSeconds={remainingSeconds}
+          />
+          <div className="run__center">
+            <p className="run__kind">{phase.kind === "hold" ? "HOLD" : "REST"}</p>
+            <h1 className="run__phase">
+              {phase.kind === "hold" ? phase.label : "Rest"}
+            </h1>
+            {phase.kind === "hold" && (
+              <>
+                <p className="run__set">
+                  Set {phase.setNumber} / {phase.totalSets}
                 </p>
-              )}
-            </>
-          )}
-          <p className="run__count">{formatDuration(remainingSeconds)}</p>
-          <p className="run__next">Next: {nextLabel}</p>
-          <p className="run__progress">
-            Phase {index + 1} / {totalPhases}
-          </p>
-
-          <div className="run__controls">
-            {status === "running" ? (
-              <button className="btn" onClick={timer.pause}>
-                Pause
-              </button>
-            ) : (
-              <button className="btn btn--primary" onClick={timer.resume}>
-                Resume
-              </button>
+                {routine.steps[phase.stepIndex]?.exercise.description && (
+                  <p className="run__hint">
+                    {routine.steps[phase.stepIndex].exercise.description}
+                  </p>
+                )}
+              </>
             )}
-            <button className="btn" onClick={timer.skip}>
-              Skip ⏭
-            </button>
-            <button className="btn btn--danger" onClick={timer.reset}>
-              Stop
-            </button>
+            <p className="run__count">{formatDuration(remainingSeconds)}</p>
+            <p className="run__next">Next: {nextLabel}</p>
+            <p className="run__progress">
+              Phase {index + 1} / {totalPhases}
+            </p>
+
+            <div className="run__controls">
+              {status === "running" ? (
+                <button className="btn" onClick={timer.pause}>
+                  Pause
+                </button>
+              ) : (
+                <button className="btn btn--primary" onClick={timer.resume}>
+                  Resume
+                </button>
+              )}
+              <button className="btn" onClick={timer.skip}>
+                Skip ⏭
+              </button>
+              <button className="btn btn--danger" onClick={timer.reset}>
+                Stop
+              </button>
+            </div>
           </div>
-        </div>
+        </>
       )}
 
       {status === "finished" && (
