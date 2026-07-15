@@ -22,6 +22,19 @@ const step = (
   restBetweenSetsSeconds,
 });
 
+/** A bilateral step (runs each set on both sides). */
+const bilateralStep = (
+  name: string,
+  sets: number,
+  holdSeconds: number,
+  restBetweenSetsSeconds: number,
+): RoutineStep => ({
+  exercise: { name, bilateral: true },
+  sets,
+  holdSeconds,
+  restBetweenSetsSeconds,
+});
+
 describe("buildTimeline", () => {
   it("expands a single exercise with multiple sets and inter-set rests", () => {
     const t = buildTimeline(
@@ -87,6 +100,48 @@ describe("buildTimeline", () => {
 
   it("returns an empty timeline for a routine with no steps", () => {
     expect(buildTimeline(routine())).toEqual([]);
+  });
+
+  it("expands a bilateral step to left/right holds with rests between every hold", () => {
+    // The worked example: 2 sets of 30s, 5s rest.
+    const t = buildTimeline(
+      routine({ steps: [bilateralStep("Kneeling Hip Flexor Lunge", 2, 30, 5)] }),
+    );
+    // L, rest, R, rest, L, rest, R  (rest between every hold, none trailing).
+    expect(t.map((p) => p.kind)).toEqual([
+      "hold", "rest", "hold", "rest", "hold", "rest", "hold",
+    ]);
+    expect(t.filter((p) => p.kind === "hold").map((p) => p.side)).toEqual([
+      "left", "right", "left", "right",
+    ]);
+    // Set counter stays 1..N; side tells the two halves apart.
+    expect(t.filter((p) => p.kind === "hold").map((p) => p.setNumber)).toEqual([
+      1, 1, 2, 2,
+    ]);
+    expect(t.every((p) => p.totalSets === 2)).toBe(true);
+  });
+
+  it("tags each switch-rest with the side it leads into", () => {
+    const t = buildTimeline(
+      routine({ steps: [bilateralStep("Lunge", 2, 30, 5)] }),
+    );
+    // rests appear at indices 1 (->right), 3 (->left), 5 (->right)
+    expect(t.filter((p) => p.kind === "rest").map((p) => p.side)).toEqual([
+      "right", "left", "right",
+    ]);
+  });
+
+  it("runs bilateral sides back-to-back when rest is 0", () => {
+    const t = buildTimeline(
+      routine({ steps: [bilateralStep("Lunge", 2, 30, 0)] }),
+    );
+    expect(t.map((p) => p.kind)).toEqual(["hold", "hold", "hold", "hold"]);
+    expect(t.map((p) => p.side)).toEqual(["left", "right", "left", "right"]);
+  });
+
+  it("leaves non-bilateral phases without a side", () => {
+    const t = buildTimeline(routine({ steps: [step("Cat–Cow", 2, 20, 5)] }));
+    expect(t.every((p) => p.side === undefined)).toBe(true);
   });
 });
 

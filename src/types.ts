@@ -66,6 +66,9 @@ export interface Routine {
 /** Kind of a single phase the timer counts down. */
 export type PhaseKind = "hold" | "rest";
 
+/** Which side of the body a bilateral phase belongs to. */
+export type Side = "left" | "right";
+
 /**
  * A single, flat unit of time the timer runs. The engine expands a `Routine`
  * into an ordered list of these; the timer just walks the list.
@@ -82,4 +85,10 @@ export interface TimelinePhase {
   setNumber: number;
   /** Total sets for the owning step (for "2/3" style display). */
   totalSets: number;
+  /**
+   * For bilateral exercises: which body side this phase is for. Holds carry
+   * their own side; a switch-rest carries the side it is switching TO; the
+   * between-exercises rest (and all non-bilateral phases) carry none.
+   */
+  side?: Side;
 }

@@ -207,6 +207,19 @@ export function RoutineEditor({ initial, onSave, onCancel }: Props) {
                 onChange={(n) => patchStep(i, { restBetweenSetsSeconds: n })}
               />
             </div>
+
+            <label className="step__bilateral">
+              <input
+                type="checkbox"
+                checked={step.exercise.bilateral === true}
+                onChange={(e) =>
+                  patchExercise(i, {
+                    bilateral: e.target.checked ? true : undefined,
+                  })
+                }
+              />
+              <span>Both sides (left, then right)</span>
+            </label>
           </li>
         ))}
       </ol>

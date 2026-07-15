@@ -14,11 +14,21 @@ export function RunScreen({ routine, onExit }: Props) {
   const { status, phase, next, remainingSeconds, index, totalPhases, timeline } =
     timer;
 
-  const nextLabel = next
-    ? next.kind === "hold"
-      ? `${next.label} (set ${next.setNumber}/${next.totalSets})`
-      : "Rest"
-    : "Finish";
+  const sideWord = (side: "left" | "right") =>
+    side === "left" ? "Left" : "Right";
+
+  const nextLabel = !next
+    ? "Finish"
+    : next.kind === "rest"
+      ? next.side
+        ? `Switch to ${sideWord(next.side)}`
+        : "Rest"
+      : `${next.side ? `${sideWord(next.side)} · ` : ""}${next.label} (set ${next.setNumber}/${next.totalSets})`;
+
+  // A switch-rest (bilateral) carries the side it leads into; holds carry their
+  // own side. Either way, `phase.side` is what the L/R indicator should light.
+  const activeSide = phase?.side;
+  const isSwitchRest = phase?.kind === "rest" && phase.side !== undefined;
 
   return (
     <section className={`run run--${phase?.kind ?? "idle"}`}>
@@ -49,10 +59,26 @@ export function RunScreen({ routine, onExit }: Props) {
             remainingSeconds={remainingSeconds}
           />
           <div className="run__center">
-            <p className="run__kind">{phase.kind === "hold" ? "HOLD" : "REST"}</p>
+            <p className="run__kind">
+              {phase.kind === "hold" ? "HOLD" : isSwitchRest ? "SWITCH" : "REST"}
+            </p>
             <h1 className="run__phase">
-              {phase.kind === "hold" ? phase.label : "Rest"}
+              {phase.kind === "hold"
+                ? phase.label
+                : isSwitchRest && activeSide
+                  ? `Switch to ${sideWord(activeSide)}`
+                  : "Rest"}
             </h1>
+            {activeSide && (
+              <div className="run__sides" role="img" aria-label={`${sideWord(activeSide)} side`}>
+                <span className={`run__side ${activeSide === "left" ? "is-active" : ""}`}>
+                  LEFT
+                </span>
+                <span className={`run__side ${activeSide === "right" ? "is-active" : ""}`}>
+                  RIGHT
+                </span>
+              </div>
+            )}
             {phase.kind === "hold" && (
               <>
                 <p className="run__set">

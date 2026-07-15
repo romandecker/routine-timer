@@ -9,7 +9,7 @@
  *     backgrounded tab, the audio hardware still plays the tone on time.
  */
 
-export type CueKind = "start" | "rest" | "tick" | "done";
+export type CueKind = "start" | "rest" | "tick" | "done" | "switch";
 
 let ctx: AudioContext | null = null;
 /** Oscillators scheduled but not yet finished, so we can cancel on pause/skip. */
@@ -24,6 +24,12 @@ const CUES: Record<CueKind, Array<Note & { delayMs?: number }>> = {
     { freq: 880, durationMs: 120, delayMs: 110 },
   ],
   rest: [{ freq: 392, durationMs: 220, gain: 0.18 }],
+  // Two equal-pitch beeps — deliberately unlike `start` (rising) and `rest`
+  // (single low tone), so a side switch is recognisable without looking.
+  switch: [
+    { freq: 560, durationMs: 90 },
+    { freq: 560, durationMs: 90, delayMs: 130 },
+  ],
   tick: [{ freq: 720, durationMs: 60, gain: 0.12 }],
   done: [
     { freq: 523, durationMs: 130 },

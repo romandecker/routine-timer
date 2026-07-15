@@ -68,12 +68,15 @@ export function useRoutineTimer(routine: Routine): TimerState {
         const t = remainingSec - k;
         if (t > 0.05) scheduleCue("tick", base + t);
       }
+      const cur = timeline[idx];
       const nextPhase = timeline[idx + 1];
       const boundaryKind = !nextPhase
         ? "done"
-        : nextPhase.kind === "hold"
-          ? "start"
-          : "rest";
+        : nextPhase.side && nextPhase.side !== cur?.side
+          ? "switch"
+          : nextPhase.kind === "hold"
+            ? "start"
+            : "rest";
       scheduleCue(boundaryKind, base + remainingSec);
     },
     [timeline],
@@ -168,10 +171,12 @@ export function useRoutineTimer(routine: Routine): TimerState {
     const nextIdx = idx + 1;
     indexRef.current = nextIdx;
     setIndex(nextIdx);
-    const durSec = timeline[nextIdx].seconds;
+    const target = timeline[nextIdx];
+    const durSec = target.seconds;
     if (wasRunning) {
       phaseEndAtRef.current = performance.now() + durSec * 1000;
-      playCueNow(timeline[nextIdx].kind === "hold" ? "start" : "rest");
+      const isSwitch = target.side && target.side !== timeline[idx]?.side;
+      playCueNow(isSwitch ? "switch" : target.kind === "hold" ? "start" : "rest");
       scheduleCurrentPhaseCues(nextIdx, durSec);
     } else {
       remainingMsRef.current = durSec * 1000;

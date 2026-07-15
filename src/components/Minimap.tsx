@@ -42,6 +42,12 @@ export function Minimap({ timeline, index, remainingSeconds }: Props) {
         {timeline.map((phase, i) => {
           const heightPct = (phase.seconds / totalSeconds) * 100;
           const state = i < index ? "past" : i === index ? "current" : "future";
+          // Bilateral holds hug an edge so a two-sided exercise zigzags down the
+          // strip; rests (incl. switch-rests) stay full width.
+          const sideClass =
+            phase.kind === "hold" && phase.side
+              ? ` minimap__seg--${phase.side}`
+              : "";
           // The current segment fills top-down as its own time elapses.
           const segFill =
             state === "past"
@@ -52,7 +58,7 @@ export function Minimap({ timeline, index, remainingSeconds }: Props) {
           return (
             <div
               key={i}
-              className={`minimap__seg minimap__seg--${phase.kind} minimap__seg--${state}`}
+              className={`minimap__seg minimap__seg--${phase.kind} minimap__seg--${state}${sideClass}`}
               style={{
                 flexBasis: `${heightPct}%`,
                 minHeight: `${MIN_SEGMENT_PX}px`,

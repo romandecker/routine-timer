@@ -338,3 +338,53 @@
   border-bottom: 5px solid transparent;
   border-left: 6px solid var(--text);
 }
+/* Bilateral holds hug an edge so a two-sided exercise zigzags down the strip. */
+.minimap__seg--left {
+  align-self: flex-start;
+  width: 62%;
+}
+.minimap__seg--right {
+  align-self: flex-end;
+  width: 62%;
+}
+
+/* ---- Bilateral: editor checkbox ---- */
+.step__bilateral {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 14px;
+  color: var(--muted);
+  cursor: pointer;
+}
+.step__bilateral input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
+/* ---- Bilateral: run-screen side indicator ---- */
+.run__sides {
+  display: flex;
+  gap: 8px;
+  margin: 4px 0;
+}
+.run__side {
+  padding: 4px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--surface-2);
+  background: var(--surface-2);
+  color: var(--muted);
+  font-weight: 700;
+  letter-spacing: 2px;
+  font-size: 13px;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+.run__side.is-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
