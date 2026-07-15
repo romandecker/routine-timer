@@ -209,6 +209,9 @@
   flex-direction: column;
   border-radius: var(--radius);
   transition: background 0.3s ease;
+  /* 16px inset clears the fixed minimap strip (content lands ~12px inside its
+     inner edge), so padding stays symmetric and the header isn't lopsided. */
+  padding: 16px;
 }
 .run--hold {
   background: color-mix(in srgb, var(--hold) 16%, transparent);
@@ -227,7 +230,6 @@
   justify-content: center;
   text-align: center;
   gap: 8px;
-  padding: 16px;
 }
 .run__kind {
   letter-spacing: 4px;
@@ -287,10 +289,6 @@
 /* ---- Minimap (run-screen progress strip) ---- */
 :root {
   --minimap-w: 10px;
-}
-/* Reserve room so the fixed strip never overlaps the centred content. */
-.run__center {
-  padding-right: calc(16px + var(--minimap-w) + 14px);
 }
 .minimap {
   position: fixed;
