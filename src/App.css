@@ -198,8 +198,45 @@
 }
 .step__fields {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  /* Wrap to fewer columns on narrow phones so the steppers never cram. */
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 8px;
+}
+
+/* ---- Number stepper (−/+) ---- */
+.stepper {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+}
+.stepper__input {
+  text-align: center;
+  padding-left: 4px;
+  padding-right: 4px;
+  flex: 1 1 auto;
+}
+.stepper__btn {
+  flex: 0 0 auto;
+  min-width: 40px;
+  border: 1px solid var(--surface-2);
+  background: var(--surface-2);
+  color: var(--text);
+  border-radius: 10px;
+  font-size: 22px;
+  line-height: 1;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation; /* no 300ms tap delay / double-tap zoom */
+}
+.stepper__btn:active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.stepper__btn:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 /* ---- Run screen ---- */

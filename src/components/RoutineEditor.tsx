@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CATALOG } from "../catalog";
 import { exerciseFromTemplate, makeStep } from "../defaults";
 import { formatDuration } from "../format";
@@ -11,7 +11,14 @@ interface Props {
   onCancel: () => void;
 }
 
-/** Small labelled number input clamped to a minimum. */
+/**
+ * Labelled integer input with −/+ steppers, tuned for mobile.
+ *
+ * Uses a numeric text input (not `type="number"`) so the mobile keypad shows
+ * without the flaky native spinners/selection. A local draft lets you type or
+ * clear freely; clamping to `min` happens only on blur (and via the steppers),
+ * so overwriting "1" with "2" isn't fought by the minimum mid-keystroke.
+ */
 function NumberField({
   label,
   value,
@@ -23,20 +30,63 @@ function NumberField({
   min: number;
   onChange: (n: number) => void;
 }) {
+  const [draft, setDraft] = useState(String(value));
+  const editing = useRef(false);
+
+  // Reflect external value changes (e.g. applying a template) unless the user
+  // is mid-edit, in which case their draft wins until they blur.
+  useEffect(() => {
+    if (!editing.current) setDraft(String(value));
+  }, [value]);
+
+  const commit = (n: number) => {
+    const clamped = Number.isFinite(n) ? Math.max(min, Math.floor(n)) : min;
+    onChange(clamped);
+    setDraft(String(clamped));
+  };
+
   return (
     <label className="field">
       <span className="field__label">{label}</span>
-      <input
-        className="field__input"
-        type="number"
-        inputMode="numeric"
-        min={min}
-        value={value}
-        onChange={(e) => {
-          const n = Number(e.target.value);
-          onChange(Number.isFinite(n) ? Math.max(min, Math.floor(n)) : min);
-        }}
-      />
+      <div className="stepper">
+        <button
+          type="button"
+          className="stepper__btn"
+          onClick={() => commit(value - 1)}
+          disabled={value <= min}
+          aria-label={`Decrease ${label}`}
+        >
+          −
+        </button>
+        <input
+          className="field__input stepper__input"
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          value={draft}
+          onFocus={(e) => {
+            editing.current = true;
+            e.currentTarget.select();
+          }}
+          onChange={(e) => {
+            const raw = e.currentTarget.value.replace(/[^0-9]/g, "");
+            setDraft(raw);
+            if (raw !== "") onChange(Math.max(min, Math.floor(Number(raw))));
+          }}
+          onBlur={() => {
+            editing.current = false;
+            commit(Number(draft));
+          }}
+        />
+        <button
+          type="button"
+          className="stepper__btn"
+          onClick={() => commit(value + 1)}
+          aria-label={`Increase ${label}`}
+        >
+          +
+        </button>
+      </div>
     </label>
   );
 }
