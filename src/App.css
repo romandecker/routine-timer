@@ -338,11 +338,11 @@
 .minimap__track {
   display: flex;
   flex-direction: column;
-  gap: 1px; /* hairline separators between phases */
+  gap: 1px; /* hairline separators between slots */
   height: 100%;
   width: 100%;
-  border-radius: 999px;
-  overflow: hidden;
+  /* No overflow clip: the caret lives inside the current segment and pokes out
+     to the left, so it must not be cropped. */
 }
 .minimap__seg {
   position: relative;
@@ -358,13 +358,29 @@
   top: 0;
   left: 0;
   width: 100%;
-  /* height set inline (0–100% of this phase elapsed) */
+  /* height set inline (0–100% of this phase/side elapsed) */
 }
 .minimap__seg--hold .minimap__fill {
   background: var(--hold);
 }
 .minimap__seg--rest .minimap__fill {
   background: var(--rest);
+}
+/* A bilateral set: two side-by-side columns (left | right) with a hairline
+   divider (the 1px gap over the darker seg background). */
+.minimap__seg--split {
+  display: flex;
+  gap: 1px;
+  background: var(--bg);
+}
+.minimap__col {
+  position: relative;
+  flex: 1 1 0;
+  height: 100%;
+  background: var(--surface-2);
+}
+.minimap__col .minimap__fill {
+  background: var(--hold);
 }
 .minimap__caret {
   position: absolute;
@@ -374,15 +390,6 @@
   border-top: 5px solid transparent;
   border-bottom: 5px solid transparent;
   border-left: 6px solid var(--text);
-}
-/* Bilateral holds hug an edge so a two-sided exercise zigzags down the strip. */
-.minimap__seg--left {
-  align-self: flex-start;
-  width: 62%;
-}
-.minimap__seg--right {
-  align-self: flex-end;
-  width: 62%;
 }
 
 /* ---- Bilateral: editor checkbox ---- */
